@@ -81,7 +81,14 @@ pip install numpy==1.26.4
 
 ## Get Started
 
-Download wiktionary data from [here](https://drive.google.com/drive/folders/1r6lEBae6YAFyKUfVw7SkeXiMJzYWrGaV?usp=sharing)
+Download training, validation and test data:
+
+```bash
+wget https://huggingface.co/datasets/zhongtaomiao/neoamt-data/resolve/main/data.zip
+unzip data.zip
+```
+
+Download wiktionary-based dictionary data from [here](https://drive.google.com/drive/folders/1r6lEBae6YAFyKUfVw7SkeXiMJzYWrGaV?usp=sharing)
 
 Put the `retrieval_data` folder into the data folder: data/retrieval_data/wikidict/output/enwikidict_20250823/all/...
 
