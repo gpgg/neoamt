@@ -1,4 +1,8 @@
-# Installation
+# NeoAMT
+
+This repository includes the source codes of paper: [NeoAMT: Neologism-Aware Agentic Machine Translation with Reinforcement Learning](https://arxiv.org/abs/2601.03790).
+
+## Installation
 
 Training Environment
 
@@ -66,7 +70,16 @@ pip install langid
 pip install numpy==1.26.4
 ```
 
-# Get Started
+## Artifacts
+
+| Checkpoint                                                                                   |
+| -------------------------------------------------------------------------------------------- |
+| [NeoAMT-4B](https://huggingface.co/zhongtaomiao/NeoAMT-4B)                                   |
+| [NeoAMT-4B-w-Process-Reward](zhongtaomiao/NeoAMT-4B-w-Process-Reward)                        |
+| [NeoAMT-8B](https://huggingface.co/zhongtaomiao/NeoAMT-8B)                                   |
+| [NeoAMT-8B-w-Process-Reward](https://huggingface.co/zhongtaomiao/NeoAMT-8B-w-Process-Reward) |
+
+## Get Started
 
 Download wiktionary data from [here](https://drive.google.com/drive/folders/1r6lEBae6YAFyKUfVw7SkeXiMJzYWrGaV?usp=sharing)
 
@@ -119,6 +132,10 @@ python -m neoamt.summary_eval --test_output_dir output/neoamt/test-20250925_1031
 
 ```
 
-## Common problems:
+### Common problems:
 
 - Token id XXX is out of vocabulary: possible solutions [link1](https://github.com/vllm-project/vllm/issues/13175) [link2](https://github.com/OpenRLHF/OpenRLHF/issues/1117) [link3](https://github.com/Simple-Efficient/RL-Factory/issues/45)
+
+## License
+
+This software is released under the `CC-BY-NC-SA-4.0 License`, see [LICENSE.txt](LICENSE.txt).
