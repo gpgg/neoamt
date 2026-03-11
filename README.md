@@ -81,7 +81,7 @@ pip install numpy==1.26.4
 
 ## Get Started
 
-Download training, validation and test data:
+Download the training, validation and test data:
 
 ```bash
 wget https://huggingface.co/datasets/zhongtaomiao/neoamt-data/resolve/main/data.zip
