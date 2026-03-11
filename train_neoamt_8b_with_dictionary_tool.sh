@@ -1,0 +1,129 @@
+TEMPLATE_TYPE=think_search_translate
+
+# neologism to plain
+DIRECTION=neologism2plain
+TRAIN_FILE=data/wiktionary/$TEMPLATE_TYPE/$DIRECTION/train.parquet
+VAL_FILE=data/wiktionary/$TEMPLATE_TYPE/$DIRECTION/val.parquet
+
+BASE_MODEL=/lustre/miao/models/Qwen/Qwen3-8B
+REWARD_FN_PATH=neoamt/mt_score.py
+
+REWARD_FN_NAME=batch_compute_scores
+ROLLOUT_MODE=sync_with_tools
+
+ENABLE_RELATIVE_QUALITY_ESTIMATION_SAMPLING=True
+RQES_ALPHA=10 # qwen3-8b: 10
+RQES_BETA=0.0 # qwen3-8b: 0.0
+RQES_GAMMA=-5 # qwen3-8b: -5
+ADV_ESTIMATOR=grpo # grpo, lago
+
+ENABLE_TOOLS=True
+
+SEARCH_CLASS=DenseRetrieverTool
+SEARCH_URL=http://localhost:8003/retrieve
+SEARCH_CACHE=.wiktionary_search_cache
+SEARCH_CLASS_PATH=verl.workers.rollout.tools.search_tool.$SEARCH_CLASS
+BING_SEARCH_ZONE=serp_api1
+BING_SEARCH_LOCATION=jp
+
+SEARCH_MAX_RESULTS=5
+N_GPUS=8
+N_NODES=1
+N_ROLLOUT=8
+INITIAL_ROLLOUT=4 # qwen3-8b: 4
+# TRAIN_BATCH_SIZE=4
+TRAIN_BATCH_SIZE=32
+# PPO_MINI_BATCH_SIZE=4
+PPO_MINI_BATCH_SIZE=16
+BATCH_SIZE_PER_GPU=2
+N_EPOCH=1
+REWARD_TYPE=cometkiwi_da_xl_xcomet_xl # cometkiwi_da_xl, xcomet_xl, cometkiwi_da_xl_xcomet_xl,
+REWARD_BASE_URL=http://127.0.0.1:8000
+VAL_BEFORE_TRAIN=False
+VAL_ONLY=False
+EVAL_TERMS=True
+TERM_REWARD_RATIO=0.1
+TERM_REWARD_TYPE="lem_regex" # lem_regex, lem_fuzzy90, regex, fuzzy90
+SEARCH_REWARD_RATIO=0.0 # qwen3-8b: 0.0 # search reward is the process reward described in the paper
+SEARCH_REWARD_SIDE="both" # "src", "tgt", "both"
+SEARCH_REWARD_TYPE="lem_regex" # lem_regex, lem_fuzzy90, regex, fuzzy90
+MAX_TURNS=3 # TOP_P=0.999 # to avoid out of vocabulary error for qwen3-4b
+VLLM_RPC_TIMEOUT=180000
+SEARCH_LANG_SIDE=all
+EXP_NAME="$(date +%Y%m%d_%H%M)-$DIRECTION-qwen3-8b-rm_$REWARD_TYPE-term_reward_ratio_$TERM_REWARD_RATIO-term_reward_type_$TERM_REWARD_TYPE-$MAX_TURNS-$SEARCH_CLASS-$TEMPLATE_TYPE-rqe_$ENABLE_RELATIVE_QUALITY_ESTIMATION_SAMPLING-gamma-enabeld-$INITIAL_ROLLOUT-$RQES_ALPHA-$RQES_BETA-$RQES_GAMMA-$TRAIN_BATCH_SIZE-$N_ROLLOUT-$PPO_MINI_BATCH_SIZE-$BATCH_SIZE_PER_GPU-$N_EPOCH-$SEARCH_REWARD_RATIO-$SEARCH_REWARD_SIDE-$SEARCH_REWARD_TYPE"
+mkdir -p rl_logs
+PYTHONUNBUFFERED=1
+# VERL_LOGGING_LEVEL=DEBUG
+python3 -m verl.trainer.main_ppo \
+    algorithm.adv_estimator=$ADV_ESTIMATOR \
+    data.train_files=$TRAIN_FILE \
+    data.val_files=$VAL_FILE \
+    data.train_batch_size=$TRAIN_BATCH_SIZE \
+    data.max_prompt_length=1024 \
+    data.max_response_length=4096 \
+    data.filter_overlong_prompts=True \
+    data.truncation='error' \
+    actor_rollout_ref.nccl_timeout=10800 \
+    actor_rollout_ref.model.path=$BASE_MODEL \
+    actor_rollout_ref.actor.optim.lr=1e-6 \
+    actor_rollout_ref.model.use_remove_padding=True \
+    actor_rollout_ref.actor.ppo_mini_batch_size=$PPO_MINI_BATCH_SIZE \
+    actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=$BATCH_SIZE_PER_GPU \
+    actor_rollout_ref.actor.use_kl_loss=False \
+    actor_rollout_ref.actor.kl_loss_coef=0.001 \
+    actor_rollout_ref.actor.kl_loss_type=low_var_kl \
+    actor_rollout_ref.actor.entropy_coeff=0 \
+    actor_rollout_ref.model.enable_gradient_checkpointing=True \
+    actor_rollout_ref.actor.fsdp_config.param_offload=False \
+    actor_rollout_ref.actor.fsdp_config.optimizer_offload=False \
+    actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=$BATCH_SIZE_PER_GPU \
+    actor_rollout_ref.rollout.tensor_model_parallel_size=2 \
+    actor_rollout_ref.rollout.name=vllm \
+    actor_rollout_ref.rollout.mode=${ROLLOUT_MODE} \
+    actor_rollout_ref.rollout.gpu_memory_utilization=0.6 \
+    actor_rollout_ref.rollout.initial_rollout_n=$INITIAL_ROLLOUT \
+    actor_rollout_ref.rollout.n=$N_ROLLOUT \
+    actor_rollout_ref.ref.log_prob_micro_batch_size_per_gpu=$BATCH_SIZE_PER_GPU \
+    actor_rollout_ref.ref.fsdp_config.param_offload=True \
+    actor_rollout_ref.rollout.tools.enable=$ENABLE_TOOLS \
+    actor_rollout_ref.rollout.tools.search_lang_side=$SEARCH_LANG_SIDE \
+    actor_rollout_ref.rollout.tools.call_limit=$MAX_TURNS \
+    actor_rollout_ref.rollout.tools.retry_count=2 \
+    actor_rollout_ref.rollout.tools.max_workers=64 \
+    actor_rollout_ref.rollout.tools.timeout=120 \
+    actor_rollout_ref.rollout.tools.tool_instances.search.class_path=$SEARCH_CLASS_PATH \
+    actor_rollout_ref.rollout.tools.tool_instances.search.params.url=$SEARCH_URL \
+    actor_rollout_ref.rollout.tools.tool_instances.search.params.max_results=$SEARCH_MAX_RESULTS \
+    actor_rollout_ref.rollout.tools.tool_instances.search.params.result_length=2000 \
+    actor_rollout_ref.rollout.tools.tool_instances.search.params.cache_file=$SEARCH_CACHE \
+    actor_rollout_ref.rollout.tools.tool_instances.search.params.api_key=$BING_SEARCH_API_KEY \
+    actor_rollout_ref.rollout.tools.tool_instances.search.params.zone=$BING_SEARCH_ZONE \
+    actor_rollout_ref.rollout.tools.tool_instances.search.params.location=$BING_SEARCH_LOCATION \
+    actor_rollout_ref.rollout.relative_quality_estimation_sampling.enable=$ENABLE_RELATIVE_QUALITY_ESTIMATION_SAMPLING \
+    actor_rollout_ref.rollout.relative_quality_estimation_sampling.alpha=$RQES_ALPHA \
+    actor_rollout_ref.rollout.relative_quality_estimation_sampling.beta=$RQES_BETA \
+    actor_rollout_ref.rollout.relative_quality_estimation_sampling.gamma=$RQES_GAMMA \
+    algorithm.use_kl_in_reward=False \
+    trainer.val_before_train=$VAL_BEFORE_TRAIN \
+    trainer.val_only=$VAL_ONLY \
+    trainer.critic_warmup=0 \
+    trainer.logger='["console","wandb"]' \
+    trainer.project_name='neoamt' \
+    trainer.experiment_name=$EXP_NAME \
+    trainer.n_gpus_per_node=$N_GPUS \
+    trainer.nnodes=$N_NODES \
+    trainer.save_freq=100 \
+    trainer.test_freq=50 \
+    trainer.validation_data_dir=output/$EXP_NAME \
+    custom_reward_function.path=$REWARD_FN_PATH \
+    custom_reward_function.name=$REWARD_FN_NAME \
+    reward_model.reward_kwargs.reward_type=$REWARD_TYPE \
+    reward_model.reward_kwargs.reward_base_url=$REWARD_BASE_URL \
+    reward_model.reward_kwargs.eval_terms=$EVAL_TERMS \
+    reward_model.reward_kwargs.term_reward_ratio=$TERM_REWARD_RATIO \
+    reward_model.reward_kwargs.term_reward_type=$TERM_REWARD_TYPE \
+    reward_model.reward_kwargs.search_reward_ratio=$SEARCH_REWARD_RATIO \
+    reward_model.reward_kwargs.search_reward_side=$SEARCH_REWARD_SIDE \
+    reward_model.reward_kwargs.search_reward_type=$SEARCH_REWARD_TYPE \
+    trainer.total_epochs=$N_EPOCH \
+    2>&1 | tee rl_logs/$EXP_NAME.log
