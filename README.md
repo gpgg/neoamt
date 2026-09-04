@@ -74,10 +74,10 @@ pip install numpy==1.26.4
 
 | Checkpoint                                                                                   |
 | -------------------------------------------------------------------------------------------- |
-| [NeoAMT-4B](https://huggingface.co/zhongtaomiao/NeoAMT-4B)                                   |
-| [NeoAMT-4B-w-Process-Reward](zhongtaomiao/NeoAMT-4B-w-Process-Reward)                        |
-| [NeoAMT-8B](https://huggingface.co/zhongtaomiao/NeoAMT-8B)                                   |
-| [NeoAMT-8B-w-Process-Reward](https://huggingface.co/zhongtaomiao/NeoAMT-8B-w-Process-Reward) |
+| [NeoAMT-4B](https://huggingface.co/NeoAMT/NeoAMT-4B)                                   |
+| [NeoAMT-4B-w-Process-Reward](https://huggingface.co/NeoAMT/NeoAMT-4B-w-Process-Reward)                        |
+| [NeoAMT-8B](https://huggingface.co/NeoAMT/NeoAMT-8B)                                   |
+| [NeoAMT-8B-w-Process-Reward](https://huggingface.co/NeoAMT/NeoAMT-8B-w-Process-Reward) |
 
 ## Get Started
 
