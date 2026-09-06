@@ -1,6 +1,6 @@
 # NeoAMT
 
-This repository includes the source codes of paper: [NeoAMT: Neologism-Aware Agentic Machine Translation with Reinforcement Learning](https://arxiv.org/abs/2601.03790).
+This repository includes the source code of paper: [NeoAMT: Neologism-Aware Agentic Machine Translation with Reinforcement Learning](https://arxiv.org/abs/2601.03790).
 
 ## Installation
 
